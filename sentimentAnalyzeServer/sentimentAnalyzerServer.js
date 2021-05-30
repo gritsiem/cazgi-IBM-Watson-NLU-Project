@@ -136,17 +136,13 @@ app.get("/text/sentiment", async (req,res) => {
     };
     let result = getSentiment(analyzeParams)
     result.then((data)=>{
-        if(data.code!==null){
-            console.log(data)
-            // return res.status(data.status).send(data.message)
-        }
         console.log("result ",data)
         return res.send(data);
     })
     
 });
 
-let server = app.listen(8080, () => {
+let server = app.listen(8082, () => {
     console.log('Listening', server.address().port)
 })
 
