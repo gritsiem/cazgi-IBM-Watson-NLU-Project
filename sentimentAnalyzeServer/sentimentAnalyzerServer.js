@@ -5,7 +5,7 @@ dotenv.config()
 
 function getNLUInstance(){
 let api_key = process.env.API_KEY
-let api_url = process.env.api_url
+let api_url = process.env.API_URL
 
 const NLUV1 = require('ibm-watson/natural-language-understanding/v1');
 const { IamAuthenticator } = require('ibm-watson/auth');
@@ -13,14 +13,58 @@ const { IamAuthenticator } = require('ibm-watson/auth');
 const naturalLanguageUnderstanding = new NLUV1({
   version: '2020-08-01',
   authenticator: new IamAuthenticator({
-    apikey: '{api_key}',
+    apikey: api_key,
   }),
-  serviceUrl: '{api_url}',
+  serviceUrl: api_url,
 });
 
 return naturalLanguageUnderstanding;
 }
+const getEmotion = (params) =>{
+ let nlu = getNLUInstance()
+ console.log("analyzing emotion")
 
+ const promise = (resolve, reject) =>{
+
+     nlu.analyze(params)
+      .then(analysisResults => {
+        let resp = analysisResults;
+        resolve(resp.result.emotion.document.emotion)
+      })
+      .catch(err => {
+        console.log('error:', err.code);
+        if(err.code===422){
+            resolve({status:err.code,message:err.message})
+        }
+        // reject()
+      });
+ }
+
+ return new Promise(promise)
+}
+const getSentiment = (params) =>{
+ let nlu = getNLUInstance()
+ console.log("analyzing")
+
+ const promise = (resolve, reject) =>{
+
+     nlu.analyze(params)
+      .then(analysisResults => {
+        let resp = analysisResults;
+        console.log(resp.result.sentiment.document.label)
+        resolve(resp.result.sentiment.document.label)
+      })
+      .catch(err => {
+        console.log('error:', err.code);
+        if(err.code===422){
+            resolve(err.message)
+        }
+        reject()
+      });
+ }
+
+ return new Promise(promise)
+}
 app.use(express.static('client'))
 
 const cors_app = require('cors');
@@ -31,20 +75,75 @@ app.get("/",(req,res)=>{
   });
 
 app.get("/url/emotion", (req,res) => {
-
-    return res.send({"happy":"90","sad":"10"});
+const analyzeParams = {
+        'url': req.query.url,
+        'features': {
+            'emotion': {
+                'document':true
+            }
+        }
+    };
+    let result = getEmotion(analyzeParams)
+    result.then((data)=>{
+        console.log(data.status)
+        console.log("result ",data)
+        return res.send(data);
+    })
 });
 
 app.get("/url/sentiment", (req,res) => {
-    return res.send("url sentiment for "+req.query.url);
+    const analyzeParams = {
+        'url': req.query.url,
+        'features': {
+            'sentiment': {
+                'document':true
+            }
+        }
+    };
+    let result = getSentiment(analyzeParams)
+    result.then((data)=>{
+
+        console.log("result ",data)
+        return res.send(data);
+    })
 });
 
 app.get("/text/emotion", (req,res) => {
-    return res.send({"happy":"10","sad":"90"});
+    const analyzeParams = {
+        'text': req.query.text,
+        'features': {
+            'emotion': {
+                'document':true
+            }
+        }
+    };
+    let result = getEmotion(analyzeParams)
+    result.then((data)=>{
+        
+        console.log("result ",data)
+        return res.send(data);
+    })
 });
 
-app.get("/text/sentiment", (req,res) => {
-    return res.send("text sentiment for "+req.query.text);
+app.get("/text/sentiment", async (req,res) => {
+    const analyzeParams = {
+        'text': req.query.text,
+        'features': {
+            'sentiment': {
+                'document':true
+            }
+        }
+    };
+    let result = getSentiment(analyzeParams)
+    result.then((data)=>{
+        if(data.code!==null){
+            console.log(data)
+            // return res.status(data.status).send(data.message)
+        }
+        console.log("result ",data)
+        return res.send(data);
+    })
+    
 });
 
 let server = app.listen(8080, () => {
