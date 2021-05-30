@@ -44,7 +44,7 @@ const getEmotion = (params) =>{
 }
 const getSentiment = (params) =>{
  let nlu = getNLUInstance()
- console.log("analyzing")
+ console.log("analyzing sentiment")
 
  const promise = (resolve, reject) =>{
 
@@ -85,8 +85,6 @@ const analyzeParams = {
     };
     let result = getEmotion(analyzeParams)
     result.then((data)=>{
-        console.log(data.status)
-        console.log("result ",data)
         return res.send(data);
     })
 });
@@ -102,8 +100,6 @@ app.get("/url/sentiment", (req,res) => {
     };
     let result = getSentiment(analyzeParams)
     result.then((data)=>{
-
-        console.log("result ",data)
         return res.send(data);
     })
 });
@@ -119,9 +115,7 @@ app.get("/text/emotion", (req,res) => {
     };
     let result = getEmotion(analyzeParams)
     result.then((data)=>{
-        
-        console.log("result ",data)
-        return res.send(data);
+                return res.send(data);
     })
 });
 
@@ -136,13 +130,12 @@ app.get("/text/sentiment", async (req,res) => {
     };
     let result = getSentiment(analyzeParams)
     result.then((data)=>{
-        console.log("result ",data)
         return res.send(data);
     })
     
 });
 
-let server = app.listen(8082, () => {
+let server = app.listen(8080, () => {
     console.log('Listening', server.address().port)
 })
 
